@@ -1,20 +1,12 @@
 (ns lunchselector.core
-  (:require [ring.util.response :as res]
-            [bidi.ring :refer (make-handler)]
-            [ring.middleware.session :refer [wrap-session]]
-            [lunchselector.fetch :refer [get-categories]]
-            [cheshire.core :refer :all]))
+  (:require [ring.middleware.session :refer [wrap-session]]
+            [ring.util.response :as res]
+            [bidi.ring :as bidi]
+            [lunchselector.model :as lm]
+            [lunchselector.view :as lv]))
 
 (defn homepage [request]
-  (res/response "<html>
-<head>
-<title>HomePage!!</title>
-</head>
-<body>
-<form action=\"article\" method=\"post\">
-Name: <input type=\"text\" name=\"name\"><br/>
-<input type=\"submit\" value=\"submit\">
-</form>"))
+  (res/response "Home!"))
 
 (defn not-found [request]
   {:status 404
@@ -25,16 +17,26 @@ Name: <input type=\"text\" name=\"name\"><br/>
     (res/response (str "Hi " (get params "name")))))
 
 (defn categories [request]
-  (let [resp-map (parse-string (:body (get-categories)))
+  (let [resp-map (:body (lm/get-categories))
         cats (get resp-map "categories")
         ]
     (res/response (str cats))))
 
+(defn restaurants [request]
+  (let [restaurant-list (lm/get-restaurants)]
+    (res/response (lv/create-table restaurant-list))))
+
+(defn trial [request]
+  (res/response "Hello!"))
+
 (def handler
-  (make-handler ["/" {
+  (bidi/make-handler ["/" {
+                      "" article
                       "home" homepage
                       "article" article
                       "categories" categories
+                      "restaurants" restaurants
+                      "trial" trial
                       }]))
 
 (def app
