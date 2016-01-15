@@ -1,6 +1,7 @@
 (ns lunchselector.model
   (:require [clj-http.client :as client]
-            [cheshire.core :as cheshire]))
+            [cheshire.core :as cheshire]
+            [lunchselector.db :as ldb]))
 
 ;; Zomato specific keys
 (def user-key "5ef7ba0cfc27725aefcd7fb20014485e")
@@ -15,16 +16,14 @@
 (defn get-categories []
   (client/get (str api-uri "categories")
               {:headers {"user_key" user-key}
-               :debug true
-               :debug-body true
                :save-request? true}))
 
-(defn- fetch-restaurants []
+(defn- fetch-restaurants [keyword]
   "Fetch the list of restaurants closest to our location"
   (client/get (str api-uri "search")
               {:accept :json
                :headers {"user_key" user-key}
-               :query-params {
+               :query-params {"q" keyword
                               "lat" latitude
                               "lon" longitude
                               "entity_id" entity_id
@@ -40,10 +39,25 @@
 (defn- get-rest-rating [restaurant]
   (:aggregate_rating (:user_rating restaurant)))
 
-(defn get-restaurants []
-  (loop [restaurant-list (:restaurants (cheshire/parse-string (:body (fetch-restaurants)) true))
+(defn get-restaurants [keyword]
+  (loop [restaurant-list (:restaurants
+                          (cheshire/parse-string
+                           (:body (fetch-restaurants keyword)) true))
          resta ()]
     (if (empty? restaurant-list)
       resta
       (recur (rest restaurant-list)
              (conj resta (get-rest-name (first restaurant-list)))))))
+
+(defn submit-votes [user votes]
+  (if (vector? votes)
+    (doseq [x votes]
+      (try
+        (ldb/insert {:user user :restaurant x})
+        (catch Exception e
+          (prn e))))
+
+    (try
+      (ldb/insert {:user user :restaurant votes})
+        (catch Exception e
+          (prn e)))))

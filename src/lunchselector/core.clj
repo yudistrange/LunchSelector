@@ -2,42 +2,59 @@
   (:require [ring.middleware.session :refer [wrap-session]]
             [ring.util.response :as res]
             [bidi.ring :as bidi]
+            [cheshire.core :as cheshire]
             [lunchselector.model :as lm]
-            [lunchselector.view :as lv]))
-
-(defn homepage [request]
-  (res/response "Home!"))
-
-(defn not-found [request]
-  {:status 404
-   :body "Not found!"})
-
-(defn article [request]
-  (let [params (:params request)]
-    (res/response (str "Hi " (get params "name")))))
-
-(defn categories [request]
-  (let [resp-map (:body (lm/get-categories))
-        cats (get resp-map "categories")
-        ]
-    (res/response (str cats))))
+            [lunchselector.view :as lv]
+            [lunchselector.oauth :as lo]
+            [lunchselector.db :as ldb]))
 
 (defn restaurants [request]
-  (let [restaurant-list (lm/get-restaurants)]
-    (res/response (lv/create-table restaurant-list))))
+  (let [cookies (:cookies request)
+        params (:params request)
+        user (:value (get cookies "user"))
+        keyword (get params "keyword")
+        restaurant-list (lm/get-restaurants keyword)]
+    (res/response (lv/render-restaurants restaurant-list user))))
 
-(defn trial [request]
-  (res/response "Hello!"))
+(defn login [request]
+  (let [params (:params request)
+        token-response (lo/get-oauth-token (get params "code"))
+        access-token (get (cheshire/parse-string (:body token-response))
+                          "access_token")
+        user-details (lo/get-user-details access-token)]
+    (-> (res/redirect "/")
+        (assoc :cookies {"user" {:value (:name (cheshire/parse-string (:body user-details) true))}}))))
+
+(defn oauth [request]
+  (res/redirect lo/oauth-redirect))
+
+(defn search [request]
+  (let [cookies (:cookies request)
+        user (:value (get cookies "user"))]
+    (if (nil? user)
+      (res/redirect "/oauth")
+      (res/response (lv/render-search user)))))
+
+(defn vote [request]
+  (let [params (:params request)
+        votes (get params "restaurant")
+        cookies (:cookies request)
+        user (:value (get cookies "user"))]
+    (lm/submit-votes user votes)
+    (res/response (lv/render-vote votes user))))
+
+(defn result [request]
+  (res/response (ldb/query)))
 
 (def handler
   (bidi/make-handler ["/" {
-                      "" article
-                      "home" homepage
-                      "article" article
-                      "categories" categories
-                      "restaurants" restaurants
-                      "trial" trial
-                      }]))
+                           "" search
+                           "restaurants" restaurants
+                           "login" login
+                           "oauth" oauth
+                           "vote" vote
+                           "result" result
+                           }]))
 
 (def app
   (-> handler
