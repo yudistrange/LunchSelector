@@ -1,5 +1,7 @@
 (ns lunchselector.core
   (:require [ring.middleware.session :refer [wrap-session]]
+            [ring.middleware.params :refer [wrap-params]]
+            [ring.adapter.jetty :as jetty]
             [ring.util.response :as res]
             [bidi.ring :as bidi]
             [cheshire.core :as cheshire]
@@ -58,4 +60,8 @@
 
 (def app
   (-> handler
+      (wrap-params handler)
       wrap-session))
+
+(defn -main []
+  ((jetty/run-jetty app {:port 3000})))
