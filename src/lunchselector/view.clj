@@ -41,3 +41,10 @@
                           [:tr
                            [:td x]]))]]
    [:div "You can check the results " [:a {:href "/result"} "here!"]]))
+
+(defn render-result [rows]
+  (hiccup/html
+   [:div (doall (for [x rows]
+                  [:div
+                   [:div (str  (:restaurant x) " : " (:votes x))]
+                   [:br]]))]))

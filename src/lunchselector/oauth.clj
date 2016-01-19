@@ -5,13 +5,13 @@
             [clj-http.client :as client]))
 
 ;; Google OAuth specific keys
-(def client-id "220141946325-055bo1ln2vq1egv7dn2efomgs2h6mco9.apps.googleusercontent.com")
-(def client-secret "Yz-gBCjRW-mcytf95s9gqde6")
+(def client-id "220141946325-jeuee8ea9lo7al89tjgpfube1fnqibh8.apps.googleusercontent.com")
+(def client-secret "6TVCYp3CYbQGFBppSR-a6iGe")
 (def user (atom {:google-id "" :google-name "" :google-email ""}))
 (def oauth-code-uri "https://accounts.google.com/o/oauth2/auth?")
 (def oauth-token-uri "https://www.googleapis.com/oauth2/v4/token")
 (def google-user-info-uri "https://www.googleapis.com/oauth2/v1/userinfo?")
-(def redirect-uri "http://localhost:3000/login")
+(def redirect-uri "http://lunch.nilenso.com/login")
 
 (def oauth-redirect (str oauth-code-uri
                          "scope=email%20profile&"

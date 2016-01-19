@@ -46,7 +46,7 @@
     (res/response (lv/render-vote votes user))))
 
 (defn result [request]
-  (res/response (ldb/query)))
+  (res/response (lv/render-result (ldb/query))))
 
 (def handler
   (bidi/make-handler ["/" {
