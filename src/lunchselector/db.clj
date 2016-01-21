@@ -138,7 +138,7 @@
            "SELECT ?, "           ;; User ID
            " ?, "                 ;; Restaurant ID
            " ?, "                 ;; Date
-           " ?, "                 ;; Timestamp
+           " ? "                 ;; Timestamp
            "WHERE NOT EXISTS "
            "(SELECT * FROM " votes
            " WHERE user_id = ? "  ;; User ID
@@ -153,20 +153,18 @@
       today]
       :transaction? true)))
 
-(defn add-restaurant-safe [restaurant]
-  (let [name (:name restaurant)
-        added-by (:added-by restaurant)
-        now (time/now)]
+(defn add-restaurant-safe [name added-by]
+  (let [now (time/now)]
     (jdbc/execute!
      db-spec
      [(str "INSERT into " restaurants
            "(name, added_by, timestamp) "
-           "SELECT ?,"            ;; Restaurant Name
-           "?, "                  ;; Added by
-           "?, "                  ;; Timestamp
+           "SELECT ?," ;; Restaurant Name
+           "?, "       ;; Added by
+           "? "       ;; Timestamp
            "WHERE NOT EXISTS "
            "(SELECT * FROM " restaurants
-           " WHERE name = ? )" )  ;; Restaurant Name
+           " WHERE name = ? )" ) ;; Restaurant Name
       name
       added-by
       (coerce/to-sql-time now)
