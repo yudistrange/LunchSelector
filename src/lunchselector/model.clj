@@ -1,7 +1,8 @@
 (ns lunchselector.model
   (:require [clj-http.client :as client]
             [cheshire.core :as cheshire]
-            [lunchselector.db :as ldb]))
+            [lunchselector.db :as ldb]
+            [lunchselector.utils :as lu]))
 
 ;; Zomato specific keys
 (def user-key "5ef7ba0cfc27725aefcd7fb20014485e")
@@ -11,6 +12,8 @@
 ;; Nilenso Office lat-long
 (def latitude 12.981860)
 (def longitude 77.638664)
+
+(def zomato "Zomato") ;; Used for adding restaurants automatically
 
 ;; API to fetch data from Zomato
 (defn get-categories []
@@ -39,25 +42,49 @@
 (defn- get-rest-rating [restaurant]
   (:aggregate_rating (:user_rating restaurant)))
 
-(defn get-restaurants [keyword]
+(defn online-restaurants [keyword]
   (loop [restaurant-list (:restaurants
-                          (cheshire/parse-string
-                           (:body (fetch-restaurants keyword)) true))
+                          (lu/parse-to-clj-map
+                           (fetch-restaurants keyword)))
          resta ()]
     (if (empty? restaurant-list)
       resta
       (recur (rest restaurant-list)
              (conj resta (get-rest-name (first restaurant-list)))))))
 
-(defn submit-votes [user votes]
+(defn- cast-new-vote? [email restaurant]
+  (let [user-id (:user_id (first (ldb/fetch-user-id email)))
+        rest-id (:rest_id (first (ldb/fetch-restaurant-id restaurant)))]
+    (if (empty? (ldb/check-votes user-id rest-id))
+      true
+      false)))
+
+(defn submit-votes [email votes]
   (if (vector? votes)
     (doseq [x votes]
-      (try
-        (ldb/insert {:user user :restaurant x})
-        (catch Exception e
-          (prn e))))
+      (ldb/cast-vote-safe {:email email :restaurant x}))
+    (ldb/cast-vote-safe {:email email :restaurant votes})))
 
-    (try
-      (ldb/insert {:user user :restaurant votes})
-        (catch Exception e
-          (prn e)))))
+(defn submit-users [user email]
+  (ldb/add-user-safe {:name user :email email}))
+
+(defn submit-restaurants [rest added-by]
+  (if (vector? rest)
+    (doseq [x rest] (ldb/add-restaurant-safe x added-by))
+    (ldb/add-restaurant-safe rest added-by)))
+
+(defn submit-online-restaurants [rest]
+  (submit-restaurants rest zomato))
+
+(defn offline-restaurants []
+  (let [offline-list (ldb/fetch-offline-restaurants)]
+    (lu/get-restaurant-name-from-db offline-list)))
+
+(defn my-votes [email]
+  (ldb/fetch-my-votes email))
+
+(defn votes-today []
+  (ldb/fetch-votes-for-today))
+
+(defn top-restaurants []
+  (ldb/fetch-popular-restaurants))
