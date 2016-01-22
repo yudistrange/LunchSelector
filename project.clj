@@ -12,10 +12,10 @@
                  [org.clojure/java.jdbc "0.4.2"]
                  [org.postgresql/postgresql "9.4.1207.jre7"]
                  [clj-time "0.11.0"]]
-  :main ^:skip-aot lunchselector.core
+  :main ^:skip-aot lunchselector.app
   :target-path "target/%s"
   :plugins [[lein-ring "0.9.7"]]
-  :ring {:handler lunchselector.core/app
+  :ring {:handler lunchselector.core/lunch-app
          :auto-reload? true
          :auto-refresh? true}
   :profiles {:uberjar {:aot :all}})

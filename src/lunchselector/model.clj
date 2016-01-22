@@ -60,7 +60,7 @@
       false)))
 
 (defn submit-votes [email votes]
-  (if (vector? votes)
+  (if (coll? votes)
     (doseq [x votes]
       (ldb/cast-vote-safe {:email email :restaurant x}))
     (ldb/cast-vote-safe {:email email :restaurant votes})))
@@ -68,10 +68,10 @@
 (defn submit-users [user email]
   (ldb/add-user-safe {:name user :email email}))
 
-(defn submit-restaurants [rest added-by]
-  (if (vector? rest)
-    (doseq [x rest] (ldb/add-restaurant-safe x added-by))
-    (ldb/add-restaurant-safe rest added-by)))
+(defn submit-restaurants [restaurant added-by]
+  (if (coll? restaurant)
+    (doseq [x restaurant] (ldb/add-restaurant-safe x added-by))
+    (ldb/add-restaurant-safe restaurant added-by)))
 
 (defn submit-online-restaurants [rest]
   (submit-restaurants rest zomato))

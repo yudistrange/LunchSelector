@@ -18,7 +18,7 @@
    [:div (str "Congrats " user "! Your vote for following restaurants has been submitted")]
    [:div
     [:table
-     (if (vector? votes)
+     (if (coll? votes)
        (doall (for [x votes]
                 [:tr
                  [:td x]]))
