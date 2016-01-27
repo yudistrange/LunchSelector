@@ -16,8 +16,7 @@
         email (:email user)]
     (jdbc/insert! db-spec
                   (keyword users)
-                  {:name name :email email :timestamp (coerce/to-sql-time (time/now))}
-                  :transaction? true)))
+                  {:name name :email email :timestamp (coerce/to-sql-time (time/now))})))
 
 (defn fetch-user-id [email]
   (jdbc/query db-spec
@@ -30,8 +29,7 @@
         added-by (:added-by restaurant)]
     (jdbc/insert! db-spec
                   (keyword restaurants)
-                  {:name name :added_by added-by :timestamp (coerce/to-sql-time (time/now))}
-                  :transaction? true)))
+                  {:name name :added_by added-by :timestamp (coerce/to-sql-time (time/now))})))
 
 (defn fetch-restaurant-id [restaurant]
   (jdbc/query db-spec
@@ -119,8 +117,7 @@
       name
       email
       now
-      email]
-     :transaction? true)))
+      email])))
 
 (defn cast-vote-safe [row]
   (let [email (:email row)
@@ -150,8 +147,7 @@
       now
       user-id
       rest-id
-      today]
-      :transaction? true)))
+      today])))
 
 (defn add-restaurant-safe [name added-by]
   (let [now (time/now)]
@@ -168,5 +164,4 @@
       name
       added-by
       (coerce/to-sql-time now)
-      name]
-     :transaction? true)))
+      name])))

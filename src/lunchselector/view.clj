@@ -1,6 +1,7 @@
 (ns lunchselector.view
   (:require [hiccup.core :as hiccup]
-            [lunchselector.db :as ldb]))
+            [lunchselector.db :as ldb]
+            [lunchselector.slack :as slack]))
 
 (defn render-restaurants [restaurants]
   (hiccup/html
@@ -18,7 +19,7 @@
    [:div (str "Congrats " user "! Your vote for following restaurants has been submitted")]
    [:div
     [:table
-     (if (vector? votes)
+     (if (coll? votes)
        (doall (for [x votes]
                 [:tr
                  [:td x]]))
@@ -52,7 +53,10 @@
    [:div
     [:table {:width "100%"}
      [:br]
-     [:tr (render-result (ldb/fetch-votes-for-today))]
+     [:tr
+      [:td (render-result (ldb/fetch-votes-for-today))]
+      [:td [:a {:href slack/slack-oauth-1st-step}
+            [:img {:src slack/slack-button-img :height "40" :width "140"}]]]]
      [:br]
      [:tr
       [:td (render-popular-restaurants (ldb/fetch-popular-restaurants))]

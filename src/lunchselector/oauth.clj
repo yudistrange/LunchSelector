@@ -1,7 +1,6 @@
 (ns lunchselector.oauth
   (:require [ring.util.codec :as codec]
             [ring.util.response :as res]
-            [bidi.ring :as bidi]
             [clj-http.client :as client]))
 
 ;; Google OAuth specific keys
@@ -11,7 +10,7 @@
 (def oauth-code-uri "https://accounts.google.com/o/oauth2/auth?")
 (def oauth-token-uri "https://www.googleapis.com/oauth2/v4/token")
 (def google-user-info-uri "https://www.googleapis.com/oauth2/v1/userinfo?")
-(def redirect-uri "http://lunch.nilenso.com/login")
+(def redirect-uri "http://localhost:3000/login")
 
 (def oauth-redirect (str oauth-code-uri
                          "scope=email%20profile&"
