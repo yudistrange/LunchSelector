@@ -8,7 +8,7 @@
             [lunchselector.view :as view]
             [lunchselector.oauth :as oauth]
             [lunchselector.utils :as utils]
-            [lunchselector.slack :as slack]))))
+            [lunchselector.slack :as slack]
             [lunchselector.utils :as utils]))
 
 (defn restaurants
