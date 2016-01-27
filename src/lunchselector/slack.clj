@@ -14,8 +14,8 @@
 
 
 ;; Slack OAuth keys
-(def slack-client-id "2216371543.19142854548")
-(def slack-client-secret "8e17415e8063a3aac519e9ed2dbc192b")
+(def slack-client-id "2216371543.19541544934")
+(def slack-client-secret "91d548e5050c3b0f872a908f78173a11")
 (def slack-bot-token "xoxb-19220038372-ZGp9heQYGJJNrzNRtqXfere1")
 (def slack-team-name "Nilenso")
 (def slack-bot-name "luncher")
