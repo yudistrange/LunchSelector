@@ -1,6 +1,6 @@
 (ns lunchselector.app
   (:gen-class)
-  (:require [ring.adapter.jetty :as jetty]
+  (:require [org.httpkit.server :as server]
             [ring.middleware.params :refer [wrap-params]]
             [ring.middleware.session :refer [wrap-session]]
             [bidi.ring :as bidi]

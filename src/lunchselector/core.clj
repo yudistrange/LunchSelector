@@ -3,13 +3,13 @@
   (:require [ring.util.response :as res]
             [ring.middleware.session :refer [wrap-session]]
             [ring.middleware.params :refer [wrap-params]]
-            [org.httpkit.server :as server]
             [cheshire.core :as cheshire]
             [lunchselector.model :as model]
             [lunchselector.view :as view]
             [lunchselector.oauth :as oauth]
             [lunchselector.utils :as utils]
             [lunchselector.slack :as slack]))))
+            [lunchselector.utils :as utils]))
 
 (defn restaurants
   "This page displays a list of offline + online restaurants"
