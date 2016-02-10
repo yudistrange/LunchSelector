@@ -1,123 +1,111 @@
 (ns lunchselector.slack
   (:require [ring.util.codec :as codec]
-            [ring.util.response :as res]
-            [clj-http.client :as client]
-            [gniazdo.core :as ws]
-            [cheshire.core :as cheshire]
             [clojure.string :as string]
-            [lunchselector.model :as model])
-  (:import  [org.eclipse.jetty.websocket.client WebSocketClient]))
+            [lunchselector.utils :as utils]))
 
-;; Application config atoms
-(def config-map (atom {}))
-(def msg-id (atom 1))
+;; Conneciton config maps
+(def bot-name (fn [] (utils/get-config :slack-bot-name)))
+
+(defn slack-bot-help []
+  (let [bot (bot-name)]
+    (str "Hi! This is help section for the Lunch! App.\n"
+         "List of commands:\n"
+         "@" bot " :status \tPrints today's vote tally\n"
+         "@" bot " :top \tPrints list of popular restaurants\n"
+         "@" bot " :history \tPrints your vote history\n"
+         "@" bot " :help \tPrints this message\n")))
 
 
-;; Slack OAuth keys
-(def slack-client-id "2216371543.19541544934")
-(def slack-client-secret "91d548e5050c3b0f872a908f78173a11")
-(def slack-bot-token "xoxb-19220038372-ZGp9heQYGJJNrzNRtqXfere1")
-(def slack-team-name "Nilenso")
-(def slack-bot-name "luncher")
+;; Slack API end points
+(defn slack-oauth-1st-step-uri
+  "Creates the uri for Slack's OAuth 1st step endpoint with appropriate params"
+  []
+  (str (utils/get-config :slack-oauth-code-uri)
+       "client_id="     (codec/url-encode (utils/get-config :slack-oauth-client-id))
+       "&scope="        (codec/url-encode (utils/get-config :slack-oauth-scope))
+       "&redirect_uri=" (codec/url-encode (utils/get-config :slack-oauth-redirect-uri))
+       "&team="         (codec/url-encode (utils/get-config :slack-team-name))))
 
-;; Slack API uris
-(def slack-redirect-uri "http://lunch.nilenso.com/slack")
-(def slack-oauth-code-uri "https://slack.com/oauth/authorize?")
-(def slack-oauth-access-uri "https://slack.com/api/oauth.access?")
-(def slack-channel-info-uri "https://slack.com/api/channels.list?")
-(def slack-chat-post-uri "https://slack.com/api/chat.postMessage?")
-(def slack-rtm-start-uri "https://slack.com/api/rtm.start?")
-(def slack-button-img "https://platform.slack-edge.com/img/add_to_slack@2x.png")
+(defn slack-oauth-2nd-step-uri
+  "Sends the request to Slack's OAuth 2nd step endpoint,
+  fetching the access tokens for an authenticated user."
+  [code]
+  (str (utils/get-config :slack-oauth-token-uri)
+       "client_id="      (codec/url-encode (utils/get-config :slack-oauth-client-id))
+       "&client_secret=" (codec/url-encode (utils/get-config :slack-oauth-client-secret))
+       "&redirect_uri="  (codec/url-encode (utils/get-config :slack-oauth-redirect-uri))
+       "&code="          (codec/url-encode code)))
 
-;; Slack
-(def slack-oauth-1st-step
-  (str slack-oauth-code-uri
-       "client_id=" (codec/url-encode slack-client-id) "&"
-       "scope=client,read,post&"
-       "redirect_uri=" (codec/url-encode slack-redirect-uri) "&"
-       "team=" (codec/url-encode slack-team-name)))
+(defn slack-user-info-uri
+  "Fetches the user information from slack. The information"
+  [token user-id]
+  (str (utils/get-config :slack-user-info-uri)
+       "token=" (codec/url-encode token)
+       "&user=" (codec/url-encode user-id)))
 
-(defn slack-oauth-2nd-step [code]
-  (client/get
-   (str slack-oauth-access-uri
-        "client_id=" (codec/url-encode slack-client-id) "&"
-        "client_secret=" (codec/url-encode slack-client-secret) "&"
-        "redirect_uri=" (codec/url-encode slack-redirect-uri) "&"
-        "code=" (codec/url-encode code))))
+(defn slack-send-msg-uri
+  "Create the uri with parameters to send the message to slack via chat.PostMessage API"
+  [access-token channel-id msg]
+  (str (utils/get-config :slack-post-message-uri)
+       "token="     (codec/url-encode access-token)
+       "&channel="  (codec/url-encode channel-id)
+       "&username=" (codec/url-encode (bot-name))
+       "&text="     (codec/url-encode msg)
+       "&as_user=false"
+       "&mrkdwn=true"))
 
-(defn slack-send-msg [access-token channel-id msg]
-  (client/get
-   (str slack-chat-post-uri
-        "token=" (codec/url-encode access-token) "&"
-        "channel=" (codec/url-encode channel-id) "&"
-        "as_user=false&"
-        "username=" (codec/url-encode slack-bot-name) "&"
-        "mrkdwn=true&"
-        "text=" (codec/url-encode msg))))
+(defn slack-rtm-start-uri
+  "Creates a URI to initiate the websocket connection to Slack using the RTM API"
+  [token]
+  (str (utils/get-config :slack-initiate-rtm-uri)
+       "token=" token))
 
-(defn slack-channel-list [access-token]
-  (client/get
-   (str slack-channel-info-uri
-        "token=" (codec/url-encode access-token))))
+(defn slack-channel-present-uri
+  "Creates a URI to search for channels"
+  [token]
+  (str (utils/get-config :slack-list-channel-uri)
+       "token=" token))
 
-(defn slack-rtm-start [access-token]
-  (let [token access-token]
-    (swap! config-map assoc :token token)
-    (client/get
-     (str slack-rtm-start-uri
-          "token=" access-token "&"))))
+(defn slack-channel-create-uri
+  "Creates a URI which will create a new channel"
+  [token channel]
+  (str (utils/get-config :slack-create-channel-uri)
+       "token=" token
+       "&name=" channel))
 
-(defn- message-for-bot? [msg chan-id bot-id]
-  (let [type (:type msg)
+
+;; Slack helper functions
+(defn message-for-bot?
+  "Checks whether the message received is for the bot"
+  [msg chan-id bot-id]
+  (let [type    (:type msg)
         channel (:channel msg)
-        text (:text msg)
-        bot (re-pattern bot-id)]
+        text    (:text msg)
+        bot     (re-pattern bot-id)]
     (if (and (= "message" type)
              (= channel chan-id)
              (not (nil? (re-find bot text))))
       true
       false)))
 
-(defn- parse-commands [text]
+(defn parse-message
+  "Tokenize the text from slack into "
+  [text]
   (if (seq? text)
-    (second (string/split (first text) #" "))
-    (second (string/split text #" "))))
+    (string/split (first text) #" ")
+    (string/split text #" ")))
 
-(defn- add-quotes [text]
+(defn- add-quotes
+  "Addes quotes to the messages. This helps in better rendering at slack"
+  [text]
   (str "`" text "`"))
 
-(defn slack-command-result [result]
-  (add-quotes (apply str result)))
+(defn slack-result
+  "Prepares result by joining it"
+  [result]
+  (string/join result))
 
-(defn slack-exec-commands [chan-id text]
-  (let [cmd (parse-commands text)
-        input (rest text)
-        token (:token @config-map)]
-    (cond
-      (= cmd ":top") (slack-send-msg token chan-id (slack-command-result (model/top-restaurants)))
-      (= cmd ":stat") (slack-send-msg token chan-id (slack-command-result (model/votes-today)))
-      :else  (slack-send-msg token chan-id "I dont get it!"))))
-
-(defn slack-process-msg [message chan-id bot-id]
-  (let [msg (cheshire/parse-string message true)
-        text (:text msg)]
-    (when (message-for-bot? msg chan-id bot-id)
-      (slack-exec-commands chan-id text))))
-
-(defn slack-establish-conn [ws-uri channels users]
-  (let [lunch-chan (filter (fn [x] (= "lunch" (:name x))) channels)
-        chan-id (:id (first lunch-chan))
-        bot-info (filter (fn [x] (= "luncher" (:name x))) users)
-        bot-id (:id (first bot-info))
-        java-uri (java.net.URI/create ws-uri)
-        client (ws/client java-uri)]
-
-    (swap! config-map assoc :client client :bot-id bot-id :channel-id chan-id )
-    (.start client)
-    (ws/connect ws-uri
-                :on-connect #(prn (str "Connected to " %))
-                :on-receive #(slack-process-msg
-                              %
-                              (:channel-id @config-map)
-                              (:bot-id @config-map))
-                :client (:client @config-map))))
+(defn slack-quoted-result
+  "Prepares quoted result for displaying on slack"
+  [result]
+  (add-quotes (slack-result result)))

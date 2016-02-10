@@ -1,73 +1,92 @@
 (ns lunchselector.view
   (:require [hiccup.core :as hiccup]
-            [lunchselector.db :as ldb]
-            [lunchselector.slack :as slack]))
+            [lunchselector.utils :as utils]))
+
+(defn- create-restaurant-div [restaurants]
+  [:div
+   [:form {:action "/vote" :method "post"}
+    [:table
+     (doall
+      (for  [x restaurants]
+        [:tr
+         [:td x]
+         [:td [:input {:type "checkbox" :name "restaurant" :value x}]]]))]
+    [:input {:type "submit" :name "vote"}]]])
 
 (defn render-restaurants [restaurants]
   (hiccup/html
    [:div "Please choose from the following"]
-   [:div
-    [:form {:action "/vote" :method "post"}
-     [:table (doall (for [x restaurants]
-                      [:tr
-                       [:td x]
-                       [:td [:input {:type "checkbox" :name "restaurant" :value x}]]]))]
-     [:input {:type "submit" :name "vote"}]]]))
+   (create-restaurant-div restaurants)))
+
+(defn- create-vote-div [votes]
+  [:div
+    [:table
+     (if (coll? votes)
+       (doall
+        (for [x votes]
+          [:tr
+           [:td x]]))
+       [:td
+        [:td votes]])]])
 
 (defn render-vote [votes user]
   (hiccup/html
    [:div (str "Congrats " user "! Your vote for following restaurants has been submitted")]
-   [:div
-    [:table
-     (if (coll? votes)
-       (doall (for [x votes]
-                [:tr
-                 [:td x]]))
-       [:td
-        [:td votes]])]]
+   (create-vote-div votes)
    [:div "You can check the results " [:a {:href "/result"} "here!"]]))
 
 (defn- render-results-helper [rows]
-  (doall (for [x rows]
-           [:div
-            [:div (str  (:restaurant x) " : " (:vote x))]])))
+  (doall
+   (for [x rows]
+     [:div
+      [:div (str  (:restaurant x) " : " (:vote x))]])))
 
 (defn render-result [rows]
   (hiccup/html
-   [:div "The restaurants voted for the day are:"
-    (render-results-helper rows)]))
+   [:div [:b "The restaurants voted for the day are:"]
+    (render-results-helper rows)]
+   [:div [:a {:href "/"} "Go back!"]]))
 
 (defn render-my-votes [rows]
   (hiccup/html
-   [:div "Your past votes"
+   [:div [:b "Your past votes"]
     (render-results-helper rows)]))
 
 (defn render-popular-restaurants [rows]
   (hiccup/html
-   [:div "Popular restaurants"
+   [:div [:b "Popular restaurants"]
     (render-results-helper rows)]))
 
-(defn render-home [user email]
+(defn render-home [user restaurants votes my-votes slack-uri]
   (hiccup/html
-   [:div (str  "Welcome  " user)]
+   [:div [:b (str  "Welcome  " user)]]
    [:div
     [:table {:width "100%"}
      [:br]
      [:tr
-      [:td (render-result (ldb/fetch-votes-for-today))]
-      [:td [:a {:href slack/slack-oauth-1st-step}
-            [:img {:src slack/slack-button-img :height "40" :width "140"}]]]]
-     [:br]
+      [:td [:b "Today's votes"]
+       [:br]
+       (render-results-helper votes)]]
+     [:tr]
      [:tr
-      [:td (render-popular-restaurants (ldb/fetch-popular-restaurants))]
-      [:td (render-my-votes (ldb/fetch-my-votes email))]]]]
-   [:br]
-   [:div "Search based on cuisine/restaurant names"
+      [:td (render-popular-restaurants restaurants)]
+      [:td (render-my-votes my-votes)]]]]
+   [:br][:br]
+   [:div [:b "Search based on cuisine/restaurant names"]
     [:form {:action "/restaurants" :method "post"}
      [:input {:type "text" :name "keyword"}]
      [:input {:type "submit" :value "Search"}]]]
-   [:br]
-   [:div "Add offline restaurants/tiffin services"
+   [:br][:br]
+   [:div [:b "Add offline restaurants/tiffin services"]
     [:form {:action "/add-offline-restaurants" :method "post"}
      [:input {:type "text" :name "restaurant"}]
-     [:input {:type "submit" :name "Submit"}]]]))
+     [:input {:type "submit" :name "Submit"}]]]
+   [:br][:br]
+   [:div
+    {:style {:position "absolute"
+             :top "100%"
+             :right "0%"}}
+    [:b "Slack Integration"]
+    [:br]
+    [:a {:href slack-uri}
+     [:img {:src (utils/get-config :slack-button-image) :height "40" :width "140"}]]]))

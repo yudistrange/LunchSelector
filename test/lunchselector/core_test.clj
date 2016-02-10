@@ -1,7 +1,11 @@
 (ns lunchselector.core-test
   (:require [clojure.test :refer :all]
-            [lunchselector.core :refer :all]))
+            [lunchselector.core :as core]
+            [lunchselector.utils :as utils]))
 
-(deftest a-test
-  (testing "FIXME, I fail."
-    (is (= 0 1))))
+;; Initialize the app configuration
+(utils/initialize-app-configuration)
+
+(deftest restaurants-test
+  (is (= (:status (core/restaurants {:params {"keyword" "bad"}}))
+         200)))

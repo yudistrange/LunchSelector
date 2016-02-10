@@ -1,34 +1,35 @@
 (ns lunchselector.oauth
   (:require [ring.util.codec :as codec]
-            [ring.util.response :as res]
-            [clj-http.client :as client]))
+            [lunchselector.utils :as utils]))
 
-;; Google OAuth specific keys
-(def client-id "220141946325-jeuee8ea9lo7al89tjgpfube1fnqibh8.apps.googleusercontent.com")
-(def client-secret "6TVCYp3CYbQGFBppSR-a6iGe")
-(def user (atom {:google-id "" :google-name "" :google-email ""}))
-(def oauth-code-uri "https://accounts.google.com/o/oauth2/auth?")
-(def oauth-token-uri "https://www.googleapis.com/oauth2/v4/token")
-(def google-user-info-uri "https://www.googleapis.com/oauth2/v1/userinfo?")
-(def redirect-uri "http://localhost:3000/login")
+(defn google-oauth-redirect-uri
+  "Creates the URI from which to request the OAuth code from google"
+  []
+  (str (utils/get-config :google-oauth-code-uri)
+       "scope="            (codec/url-encode (utils/get-config :google-oauth-scope))
+       "&redirect_uri="    (codec/url-encode (utils/get-config :google-oauth-redirect-uri))
+       "&client_id="       (codec/url-encode (utils/get-config :google-oauth-client-id))
+       "&response_type="   (codec/url-encode (utils/get-config :google-oauth-response-type))
+       "&approval_prompt=" (codec/url-encode (utils/get-config :google-oauth-approval-prompt))))
 
-(def oauth-redirect (str oauth-code-uri
-                         "scope=email%20profile&"
-                         "redirect_uri=" (codec/url-encode redirect-uri) "&"
-                         "response_type=code&"
-                         "client_id=" (codec/url-encode client-id) "&"
-                         "approval_prompt=force"))
+(defn google-oauth-token-uri
+  "Creates the URI from to request Google's OAuth API for authentication"
+  []
+  (str (utils/get-config :google-oauth-token-uri)))
 
-(defn get-oauth-token [code]
-  (client/post (str oauth-token-uri)
-               {:form-params
-                {:code  code
-                 :client_id client-id
-                 :client_secret client-secret
-                 :redirect_uri redirect-uri
-                 :grant_type "authorization_code"}}))
+(defn google-oauth-token-params
+  "Creates a map of the parameters to be passed for Google OAuth"
+  [code]
+  {:form-params
+   {:code          code
+    :client_id     (utils/get-config :google-oauth-client-id)
+    :client_secret (utils/get-config :google-oauth-client-secret)
+    :redirect_uri  (utils/get-config :google-oauth-redirect-uri)
+    :grant_type    (utils/get-config :google-oauth-grant-type)}})
 
-(defn get-user-details [token]
-  (client/get (str google-user-info-uri
-                   "access_token="
-                   token)))
+
+(defn google-user-details-uri
+  "Creates the URI to fetch the google account details"
+  [token]
+  (str (utils/get-config :google-oauth-user-info-uri)
+       "access_token=" token))
