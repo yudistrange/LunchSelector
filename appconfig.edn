@@ -1,0 +1,54 @@
+{
+ ;; Server Configurations
+ :server-port 3000
+
+ ;; Organization location details
+ :org-latitude "12.981860"
+ :org-longitude "77.638664"
+
+ ;; Zomato specific keys
+ :zomato-user-key "5ef7ba0cfc27725aefcd7fb20014485e"
+ :zomato-api-uri "https://developers.zomato.com/api/v2.1/"
+ :zomato-entity-id "4" ;; City ID
+
+ ;; Google OAuth related keys
+ :google-oauth-client-id "220141946325-jeuee8ea9lo7al89tjgpfube1fnqibh8.apps.googleusercontent.com"
+ :google-oauth-client-secret "6TVCYp3CYbQGFBppSR-a6iGe"
+
+ ;; Google OAuth related uris
+ :google-oauth-redirect-uri "http://localhost:3000/login"
+ :google-oauth-code-uri "https://accounts.google.com/o/oauth2/auth?"
+ :google-oauth-token-uri "https://www.googleapis.com/oauth2/v4/token"
+ :google-oauth-user-info-uri "https://www.googleapis.com/oauth2/v1/userinfo?"
+ :google-oauth-scope "email profile"
+ :google-oauth-grant-type "authorization_code"
+ :google-oauth-response-type "code"
+ :google-oauth-approval-prompt "force"
+ :google-oauth-refresh-grant-type "refresh_token"
+
+ ;; Slack OAuth/bot related keys
+ :slack-oauth-client-id "2216371543.19541544934"
+ :slack-oauth-client-secret  "91d548e5050c3b0f872a908f78173a11"
+ :slack-bot-token-id "xoxb-19220038372-ZGp9heQYGJJNrzNRtqXfere1"
+ :slack-team-name "Nilenso"
+ :slack-bot-name "luncher"
+ :slack-lunch-channel-name "lunch"
+
+ ;; Slack API uris
+ :slack-oauth-redirect-uri "http://lunch.nilenso.com/slack"
+ :slack-oauth-code-uri  "https://slack.com/oauth/authorize?"
+ :slack-oauth-token-uri "https://slack.com/api/oauth.access?"
+ :slack-post-message-uri "https://slack.com/api/chat.postMessage?"
+ :slack-initiate-rtm-uri "https://slack.com/api/rtm.start?"
+ :slack-create-channel-uri "https://slack.com/api/channels.create?"
+ :slack-list-channel-uri "https://slack.com/api/channels.list?"
+ :slack-user-info-uri "https://slack.com/api/users.info?"
+ :slack-button-image  "https://platform.slack-edge.com/img/add_to_slack@2x.png"
+
+ ;; Slack scope for the oauth token
+ :slack-oauth-scope "client read post"
+
+ ;; Database related keys
+ :database-path "localhost:5432/lunches"
+ :database-subprotocol "postgresql"
+ }
