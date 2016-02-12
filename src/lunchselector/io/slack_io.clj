@@ -54,16 +54,18 @@
         text    (:text msg)
         user-id (:user msg)
         bot     (slack/bot-name)]
-    (when (slack/message-for-bot? msg chan-id bot)
-      (slack-exec-commands chan-id user-id text))))
+     (when (slack/message-for-bot? msg chan-id bot)
+       (slack-exec-commands chan-id user-id text))))
 
 (defn slack-establish-conn
   "Establishes the websocket connection and adds the connection parameters to the connection-map atom"
   [ws-uri]
   (let [java-uri (java.net.URI/create ws-uri)
-        client   (ws/client java-uri)]
+        client   (ws/client java-uri)
+        blah (println (str "slack-eastablish-conn" client))]
     (swap! connection-config-map assoc :client client)
     (.start client)
+    (println "is this happening before or after " @connection-config-map)
     (ws/connect ws-uri
                 :on-connect #(prn (str "Connected to " %))
                 :on-receive #(do (prn (str "Recieved " %))
@@ -93,18 +95,18 @@
 (defn establish-slack-websocket
   "Establishes the websocket connection with slack"
   [ws-uri]
-  (utils/get-request (slack-establish-conn ws-uri)))
+  (slack-establish-conn ws-uri))
 
 (defn is-channel-present?
   "Checks whether the channel on which the bot has to reside is present"
   [channel-name access-token]
   (let [response  (utils/get-request (slack/slack-channel-present-uri access-token))
         chan-list (:channels (utils/parse-response-body-map response))
-        req-chan  (filter (fn [x] (= channel-name (get x "name"))) chan-list)]
+        req-chan  (filter (fn [x] (= channel-name (get x :name))) chan-list)]
     (if (empty? req-chan)
       false
       (do
-        (swap! connection-config-map assoc :channel-id (get req-chan "id"))
+        (swap! connection-config-map assoc :channel-id ((first req-chan) :id))
         true))))
 
 (defn create-channel
