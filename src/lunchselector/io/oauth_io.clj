@@ -6,7 +6,7 @@
   "Establishes Google OAuth connection"
   [code]
   (utils/post-request (oauth/google-oauth-token-uri)
-                      (oauth/google-oauth-token-params)))
+                      (oauth/google-oauth-token-params code)))
 
 (defn fetch-google-oauth-token
   "Establishes connection and sends back the Oauth access token"
@@ -17,4 +17,4 @@
 (defn fetch-google-user-details
   "Fetches Google user details"
   [access-token]
-  (utils/get-request (oauth/google-user-details-uri)))
+  (utils/get-request (oauth/google-user-details-uri access-token)))
