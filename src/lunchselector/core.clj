@@ -77,7 +77,7 @@
   (let [oauth-code  (get-in request [:params "code"])
         oauth-token (slack-io/get-slack-token oauth-code)
         rtm-start   (slack-io/start-rtm-connection oauth-token)
-        ws-uri      (:url (utils/parse-response-body-map) rtm-start)
+        ws-uri      (:url (utils/parse-response-body-map rtm-start))
         channel     (utils/get-config :slack-lunch-channel-name)]
     (when (not (slack-io/is-channel-present? channel oauth-token))
       (slack-io/create-channel channel oauth-token))

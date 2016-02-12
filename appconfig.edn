@@ -35,7 +35,7 @@
  :slack-lunch-channel-name "lunch"
 
  ;; Slack API uris
- :slack-oauth-redirect-uri "http://lunch.nilenso.com/slack"
+ :slack-oauth-redirect-uri "http://localhost:3000/slack"
  :slack-oauth-code-uri  "https://slack.com/oauth/authorize?"
  :slack-oauth-token-uri "https://slack.com/api/oauth.access?"
  :slack-post-message-uri "https://slack.com/api/chat.postMessage?"

@@ -110,6 +110,6 @@
 (defn create-channel
   "Creates a slack channel with the specified name and token"
   [channel-name access-token]
-  (let [response    (utils/get-request (slack/slack-channel-create-uri access-token))
+  (let [response    (utils/get-request (slack/slack-channel-create-uri access-token channel-name))
         chan-detail (:channel (utils/parse-response-body-map response))]
     (swap! connection-config-map assoc :channel-id (get chan-detail "id"))))
