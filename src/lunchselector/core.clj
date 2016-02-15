@@ -67,7 +67,7 @@
   "Adds offline restaurants to the DB and redirects to home page"
   [request]
   (let [rest-name (get-in request [:params "restaurant"])
-        email     (get-in request [:cookies "useremail" :value]))]
+        email     (get-in request [:cookies "useremail" :value])]
     (model/submit-restaurants rest-name email)
     (res/redirect "/")))
 

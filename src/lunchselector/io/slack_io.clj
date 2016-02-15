@@ -61,11 +61,9 @@
   "Establishes the websocket connection and adds the connection parameters to the connection-map atom"
   [ws-uri]
   (let [java-uri (java.net.URI/create ws-uri)
-        client   (ws/client java-uri)
-        blah (println (str "slack-eastablish-conn" client))]
+        client   (ws/client java-uri)]
     (swap! connection-config-map assoc :client client)
     (.start client)
-    (println "is this happening before or after " @connection-config-map)
     (ws/connect ws-uri
                 :on-connect #(prn (str "Connected to " %))
                 :on-receive #(do (prn (str "Recieved " %))
