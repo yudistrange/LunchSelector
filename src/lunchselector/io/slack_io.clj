@@ -54,8 +54,8 @@
         text    (:text msg)
         user-id (:user msg)
         bot     (slack/bot-name)]
-     (when (slack/message-for-bot? msg chan-id bot)
-       (slack-exec-commands chan-id user-id text))))
+    (when (slack/message-for-bot? msg chan-id bot)
+      (slack-exec-commands chan-id user-id text))))
 
 (defn slack-establish-conn
   "Establishes the websocket connection and adds the connection parameters to the connection-map atom"
